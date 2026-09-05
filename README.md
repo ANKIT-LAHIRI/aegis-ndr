@@ -79,7 +79,7 @@ All attacks are run only against machines I own, on an isolated network, for res
 - [ ] FastAPI service + streaming pipeline
 - [ ] React dashboard with live alerts and containment
 - [ ] Adversarial evaluation (evade the detector, then harden)
-- [ ] Dockerize, document, demo video
+- [] Dockerize, document, demo video
 
 ---
 
