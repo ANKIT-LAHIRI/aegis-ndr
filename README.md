@@ -72,7 +72,7 @@ All attacks are run only against machines I own, on an isolated network, for res
 ## Roadmap
 
 - [x] Build isolated attack lab (attacker + victim VMs, static addressing)
-- [] Generate and capture labelled attack traffic (port scan, SSH brute-force)
+- [x] Generate and capture labelled attack traffic (port scan, SSH brute-force)
 - [ ] Flow feature extraction + exploratory data analysis
 - [ ] Baseline signature detection (Suricata) + rule-vs-ML comparison
 - [ ] Supervised classifier + anomaly-detection layer, honest evaluation
