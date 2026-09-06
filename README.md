@@ -73,12 +73,12 @@ All attacks are run only against machines I own, on an isolated network, for res
 - [x] Build isolated attack lab (attacker + victim VMs with static IPs)
 - [x] Generate and capture labeled traffic (port scans, SSH brute-force)
 - [x]Extract flow-level features (packets, bytes, duration, SYN count) and perform traffic analysis
-- []Implement baseline detection using Suricata and compare with custom logic
-- []Train ML models (e.g., Random Forest, Isolation Forest) for attack classification
-- []Build FastAPI service for real-time traffic analysis and alert generation
-- []Develop React dashboard for visualization and live alerts
-- []Perform adversarial testing (evasion techniques) and improve detection robustness
-- []Dockerize the system and provide documentation + demo
+- [ ]Implement baseline detection using Suricata and compare with custom logic
+- [ ]Train ML models (e.g., Random Forest, Isolation Forest) for attack classification
+- [ ]Build FastAPI service for real-time traffic analysis and alert generation
+- [ ]Develop React dashboard for visualization and live alerts
+- [ ]Perform adversarial testing (evasion techniques) and improve detection robustness
+- [ ]Dockerize the system and provide documentation + demo
 ---
 
 ## What this is and isn't
