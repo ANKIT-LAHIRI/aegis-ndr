@@ -68,19 +68,17 @@ Attack Lab (Attacker VM  →  Victim VM, isolated host-only network)
 All attacks are run only against machines I own, on an isolated network, for research and learning.
 
 ---
-
 ## Roadmap
 
-- [x] Build isolated attack lab (attacker + victim VMs, static addressing)
-- [x] Generate and capture labelled attack traffic (port scan, SSH brute-force)
-- [x] Flow feature extraction + exploratory data analysis
-- [ ] Baseline signature detection (Suricata) + rule-vs-ML comparison
-- [ ] Supervised classifier + anomaly-detection layer, honest evaluation
-- [ ] FastAPI service + streaming pipeline
-- [ ] React dashboard with live alerts and containment
-- [ ] Adversarial evaluation (evade the detector, then harden)
-- [ ] Dockerize, document, demo video
-
+- [x] Build isolated attack lab (attacker + victim VMs with static IPs)
+- [x] Generate and capture labeled traffic (port scans, SSH brute-force)
+- [x]Extract flow-level features (packets, bytes, duration, SYN count) and perform traffic analysis
+- [ ]Implement baseline detection using Suricata and compare with custom logic
+- [ ]Train ML models (e.g., Random Forest, Isolation Forest) for attack classification
+- [ ]Build FastAPI service for real-time traffic analysis and alert generation
+- [ ]Develop React dashboard for visualization and live alerts
+- [ ]Perform adversarial testing (evasion techniques) and improve detection robustness
+- [ ]Dockerize the system and provide documentation + demo
 ---
 
 ## What this is and isn't
