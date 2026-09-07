@@ -2,7 +2,7 @@
 
 ### A cybersecurity + machine-learning project: real-time intrusion detection on a virtualized attack lab
 
-> **Status: 🚧 In active development.** Lab infrastructure complete; detection engine and dashboard in progress. Commits landing daily.
+> **Status: 🚧 In active development.** Lab infrastructure complete; attack capture done; flow-extraction pipeline working on real captures; detection engine and dashboard in progress. Commits landing regularly.
 
 A self-hosted **cybersecurity** platform for **Network Detection & Response (NDR)** — it watches live network traffic on an isolated lab, detects cyber attacks using both signature rules and machine learning, explains each alert, and can contain the threat. Built to learn **detection engineering, network security, threat detection, and applied ML/data science** end-to-end — on data I generate myself rather than a public benchmark.
 
@@ -50,7 +50,7 @@ Attack Lab (Attacker VM  →  Victim VM, isolated host-only network)
 |---|---|
 | Traffic capture / flows | Python, Scapy |
 | Signature IDS | Suricata |
-| ML | XGBoost (supervised), autoencoder (anomaly), SHAP, MLflow |
+| ML | XGBoost (classifier), Isolation Forest (anomaly), SHAP, MLflow |
 | Backend | FastAPI |
 | Storage | PostgreSQL / TimescaleDB |
 | Frontend | React |
@@ -68,17 +68,33 @@ Attack Lab (Attacker VM  →  Victim VM, isolated host-only network)
 All attacks are run only against machines I own, on an isolated network, for research and learning.
 
 ---
+
+## Current data
+
+Two labelled captures processed through the flow pipeline (`flows.py`) so far:
+
+| Capture | Packets | Flows | Notes |
+|---|---|---|---|
+| `attack1.pcap` | 148 | 6 | SSH dictionary attack (hydra) — each flow short, ~25 packets, single SYN, <5s duration |
+| `normal1.pcap` | 1,472 | 2 | Legitimate SSH session — one flow with 1,463 packets over 70s (plus incidental UDP broadcast traffic) |
+
+The attack and normal SSH flows are clearly separable on packet count and duration alone, which will anchor the first baseline detector before any ML is introduced.
+
+---
+
 ## Roadmap
 
 - [x] Build isolated attack lab (attacker + victim VMs with static IPs)
 - [x] Generate and capture labeled traffic (port scans, SSH brute-force)
-- [x] Extract flow-level features (packets, bytes, duration, SYN count) and perform traffic analysis
+- [x] Extract flow-level features (packets, bytes, duration, SYN count)
+- [ ] Exploratory analysis across attack vs. normal traffic
 - [ ] Implement baseline detection using Suricata and compare with custom logic
-- [ ] Train ML models (e.g., Random Forest, Isolation Forest) for attack classification
+- [ ] Train ML models (XGBoost classifier + Isolation Forest for anomaly detection)
 - [ ] Build FastAPI service for real-time traffic analysis and alert generation
 - [ ] Develop React dashboard for visualization and live alerts
 - [ ] Perform adversarial testing (evasion techniques) and improve detection robustness
 - [ ] Dockerize the system and provide documentation + demo
+
 ---
 
 ## What this is and isn't
