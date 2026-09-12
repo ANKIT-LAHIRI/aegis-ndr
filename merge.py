@@ -5,6 +5,7 @@ sources = [
     ("normal_flows.csv", None),
     ("normal2_flows.csv", None),
     ("portscan_flows.csv", None),
+    ("blocked_flows.csv", None),
 ]
 
 fieldnames = ["endpoints", "proto", "packets", "bytes", "duration", "syns", "label"]
