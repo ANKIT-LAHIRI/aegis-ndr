@@ -146,6 +146,14 @@ The model correctly learned `portscan` (the one category with abundant examples)
 
 **Honest conclusion: at 33 total rows, this dataset does not yet contain enough of the rare classes for a trained model to beat the hand-written baseline.** This is a data-volume problem, not a model-choice problem — the fix is capturing more `normal`, `background`, and `attack_blocked` sessions before re-training, not switching algorithms.
 
+**Follow-up: more data narrowed but did not close the gap, and exposed a second problem — evaluation instability.** After capturing additional `normal` and `attack_blocked` sessions (36 rows total), a single re-run swung from 80% to 64% to 82% across three different `random_state` values with no other change. Running 10 different seeds confirmed why: accuracy ranged from **72.7% to 90.9%** (a 18.2-point spread) around a mean of ~82%, purely from which rows happened to land in the test split each time.
+
+| Seed | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Accuracy | 81.8% | 81.8% | 90.9% | 90.9% | 90.9% | 72.7% | 81.8% | 72.7% | 90.9% | 81.8% |
+
+**A single-run accuracy number is not trustworthy at this dataset size — the honest result is the distribution, not any one seed.** This is a real, well-known problem (variance from small test sets), reproduced and measured here rather than accepted on faith. The fix is the same as before — more data, particularly in the still-thin `background` (1 row) and `attack`/`attack_blocked` boundary — plus, once volume allows, k-fold cross-validation instead of a single train/test split.
+
 ---
 
 ## Roadmap
@@ -159,8 +167,9 @@ The model correctly learned `portscan` (the one category with abundant examples)
 - [x] Address class imbalance before model training
 - [x] Implement a rule-based baseline detector and evaluate per-class (90.9% overall; documented failure modes)
 - [x] Train a first ML model and evaluate honestly against the baseline (decision tree, 80% — not yet competitive; diagnosed as a data-volume gap, not a model problem)
-- [ ] Capture more `normal`, `background`, and `attack_blocked` sessions so rare classes have enough examples to learn from
-- [ ] Re-train and re-evaluate once rare-class volume is fixed
+- [x] Capture more `normal` and `attack_blocked` sessions, re-evaluate, and discover a second issue: 10-seed accuracy ranges 72.7%–90.9% (evaluation instability from too little data)
+- [ ] Capture enough data for k-fold cross-validation to replace single-seed evaluation
+- [ ] Capture more `background` traffic specifically (still 1 example)
 - [ ] Implement signature detection using Suricata and compare with baseline/fail2ban
 - [ ] Move to XGBoost + Isolation Forest once the dataset can support them
 - [ ] Build FastAPI service for real-time traffic analysis and alert generation
