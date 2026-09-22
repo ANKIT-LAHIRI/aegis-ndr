@@ -2,7 +2,7 @@
 
 ### A cybersecurity + machine-learning project: real-time intrusion detection on a virtualized attack lab
 
-> **Status: 🚧 In active development.** Lab infrastructure complete; attack + reconnaissance capture done; full data pipeline (capture → flow extraction → merge → analysis) verified across 5 traffic categories; a working rate-limiting defense (fail2ban) deployed and tested, including a documented race-condition finding; class imbalance addressed; a first rule-based baseline detector built and evaluated. ML model, FastAPI service, and dashboard in progress. Commits landing regularly.
+> **Status: 🚧 In active development.** Lab infrastructure complete; attack + reconnaissance capture done; full data pipeline (capture → flow extraction → merge → analysis) verified across 5 traffic categories; a working rate-limiting defense (fail2ban) deployed and tested, including a documented race-condition finding; class imbalance addressed; a rule-based baseline detector built and evaluated (90.9%); a first trained model built and honestly found not yet competitive, with the reason diagnosed. FastAPI service and dashboard in progress. Commits landing regularly.
 
 A self-hosted **cybersecurity** platform for **Network Detection & Response (NDR)** — it watches live network traffic on an isolated lab, detects cyber attacks using both signature rules and machine learning, explains each alert, and can contain the threat. Built to learn **detection engineering, network security, threat detection, and applied ML/data science** end-to-end — on data I generate myself rather than a public benchmark.
 
@@ -125,6 +125,29 @@ The two simple thresholds perfectly separate the "textbook" categories they were
 
 ---
 
+## First trained model — an honest negative result
+
+Before claiming any "ML beats the baseline" headline, the model has to actually earn it. It didn't, and the reason why is itself the useful finding.
+
+**Setup.** `train.py` trains a shallow `DecisionTreeClassifier` (scikit-learn, `max_depth=3`) on `balanced_flows.csv`, using packets, bytes, duration, and SYN count as features, with a 70/30 train/test split.
+
+**A real constraint hit immediately:** `train_test_split`'s `stratify` option — which guarantees every class appears in both the train and test sets — fails outright here, because `background` has exactly 1 example. You cannot stratify a class that can't be split into two non-empty groups. Stratification was dropped for this run, which is itself a limitation worth stating rather than hiding.
+
+**Result: 80% test accuracy — but this number is worse than it looks.** The 10-row test split happened to contain 7 `portscan` rows; a model that predicted "portscan" for everything, with zero learning, would already score 70% by chance. The model's 80% is barely above that floor. The per-class report makes the real story clear:
+
+| Label | Precision | Recall | F1 | Test rows |
+|---|---|---|---|---|
+| `portscan` | 0.88 | 1.00 | 0.93 | 7 |
+| `attack` | 0.50 | 1.00 | 0.67 | 1 |
+| `attack_blocked` | 0.00 | 0.00 | 0.00 | 1 |
+| `background` | 0.00 | 0.00 | 0.00 | 1 |
+
+The model correctly learned `portscan` (the one category with abundant examples) and **completely failed on `attack_blocked` and `background`** — both scored 0.00 across the board, each represented by exactly one test row. This mirrors the baseline detector's own weak spots almost exactly, but for a more fundamental reason: **a model cannot learn a pattern from one example.** The learned tree (`export_text`) shows this plainly — it rediscovered `packets` as the dominant split (echoing the hand-written baseline's own first rule), but had nowhere near enough `background`/`attack_blocked`/`normal` examples to carve out reliable boundaries for them.
+
+**Honest conclusion: at 33 total rows, this dataset does not yet contain enough of the rare classes for a trained model to beat the hand-written baseline.** This is a data-volume problem, not a model-choice problem — the fix is capturing more `normal`, `background`, and `attack_blocked` sessions before re-training, not switching algorithms.
+
+---
+
 ## Roadmap
 
 - [x] Build isolated attack lab (attacker + victim VMs with static IPs)
@@ -135,8 +158,11 @@ The two simple thresholds perfectly separate the "textbook" categories they were
 - [x] Document a defense-evasion finding (parallel attack vs. threshold-based ban) with reproducible before/after data
 - [x] Address class imbalance before model training
 - [x] Implement a rule-based baseline detector and evaluate per-class (90.9% overall; documented failure modes)
+- [x] Train a first ML model and evaluate honestly against the baseline (decision tree, 80% — not yet competitive; diagnosed as a data-volume gap, not a model problem)
+- [ ] Capture more `normal`, `background`, and `attack_blocked` sessions so rare classes have enough examples to learn from
+- [ ] Re-train and re-evaluate once rare-class volume is fixed
 - [ ] Implement signature detection using Suricata and compare with baseline/fail2ban
-- [ ] Train ML models (XGBoost classifier + Isolation Forest for anomaly detection) and beat the 90.9% baseline honestly
+- [ ] Move to XGBoost + Isolation Forest once the dataset can support them
 - [ ] Build FastAPI service for real-time traffic analysis and alert generation
 - [ ] Develop React dashboard for visualization and live alerts
 - [ ] Perform adversarial testing (evasion techniques) and improve detection robustness
