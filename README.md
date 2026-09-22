@@ -2,13 +2,13 @@
 
 ### A cybersecurity + machine-learning project: real-time intrusion detection on a virtualized attack lab
 
-> **Status: 🚧 In active development.** Lab infrastructure complete; attack + reconnaissance capture done; full data pipeline (capture → flow extraction → merge → analysis) verified across 5 traffic categories; a working rate-limiting defense (fail2ban) deployed and tested, including a documented race-condition finding. ML model, FastAPI service, and dashboard in progress. Commits landing regularly.
+> **Status: 🚧 In active development.** Lab infrastructure complete; attack + reconnaissance capture done; full data pipeline (capture → flow extraction → merge → analysis) verified across 5 traffic categories; a working rate-limiting defense (fail2ban) deployed and tested, including a documented race-condition finding; class imbalance addressed; a first rule-based baseline detector built and evaluated. ML model, FastAPI service, and dashboard in progress. Commits landing regularly.
 
 A self-hosted **cybersecurity** platform for **Network Detection & Response (NDR)** — it watches live network traffic on an isolated lab, detects cyber attacks using both signature rules and machine learning, explains each alert, and can contain the threat. Built to learn **detection engineering, network security, threat detection, and applied ML/data science** end-to-end — on data I generate myself rather than a public benchmark.
 
 **Domains:** Cybersecurity · Intrusion Detection & Prevention · Machine Learning · Data Science · Networking · MLOps
 
-**Keywords:** cybersecurity, network security, intrusion detection system (IDS), intrusion prevention system (IPS), threat detection, SOC, SIEM concepts, anomaly detection, MITRE ATT&CK, Suricata, packet analysis, packet capture, brute-force detection, dictionary attack, credential stuffing, port-scan detection, reconnaissance detection, rate limiting, fail2ban, SSH hardening, race condition, denial-of-service reaction time, machine learning, feature engineering, class imbalance, XGBoost, Isolation Forest, FastAPI, Docker, Scapy, tcpdump, nmap, hydra, TCP/IP, virtualization, VirtualBox.
+**Keywords:** cybersecurity, network security, intrusion detection system (IDS), intrusion prevention system (IPS), threat detection, SOC, SIEM concepts, anomaly detection, baseline detection, rule-based classification, MITRE ATT&CK, Suricata, packet analysis, packet capture, brute-force detection, dictionary attack, credential stuffing, port-scan detection, reconnaissance detection, rate limiting, fail2ban, SSH hardening, race condition, denial-of-service reaction time, machine learning, feature engineering, class imbalance, stratified sampling, XGBoost, Isolation Forest, FastAPI, Docker, Scapy, tcpdump, nmap, hydra, TCP/IP, virtualization, VirtualBox.
 
 ---
 
@@ -105,6 +105,26 @@ Detection is only half the story — Aegis also tests a real, working prevention
 
 ---
 
+## Class imbalance and a first baseline detector
+
+**Balancing the dataset.** `balance.py` reads `combined_flows.csv` and caps every label at 20 rows, randomly subsampling any category above that (only `portscan`, 1,002 → 20) while keeping every row of the rare categories intact. This produces `balanced_flows.csv` (33 rows) — a proportioned dataset for evaluation and future training — while `combined_flows.csv` stays untouched as the full, honest record described above.
+
+**A rule-based baseline, before any ML.** `baseline.py` applies two hand-written thresholds — small-packet/near-zero-duration flows flagged as scan-like, moderate-packet/short-duration/low-byte flows flagged as bruteforce-like — and checks each prediction against the true label.
+
+**Result: 90.9% overall accuracy (30/33)** — but the per-class breakdown is the real finding, not the headline number:
+
+| Label | Correct | Accuracy |
+|---|---|---|
+| `attack` | 6/6 | 100% |
+| `normal` | 2/2 | 100% |
+| `portscan` | 20/20 | 100% |
+| `background` | 0/1 | **0%** |
+| `attack_blocked` | 2/4 | **50%** |
+
+The two simple thresholds perfectly separate the "textbook" categories they were designed around, but fail exactly where nuance appears: they cannot distinguish a tiny background broadcast from a low-volume attack (both are small and brief), and they miss the half of `attack_blocked` flows that hang for 50+ seconds after the firewall drop — far outside either rule's duration window. **This baseline, and its two documented failure modes, is the number and the gap any future ML model needs to beat and close.**
+
+---
+
 ## Roadmap
 
 - [x] Build isolated attack lab (attacker + victim VMs with static IPs)
@@ -113,9 +133,10 @@ Detection is only half the story — Aegis also tests a real, working prevention
 - [x] Exploratory analysis across attack, normal, and reconnaissance traffic
 - [x] Deploy a working rate-limiting defense (fail2ban) and test it against real attack traffic
 - [x] Document a defense-evasion finding (parallel attack vs. threshold-based ban) with reproducible before/after data
-- [ ] Address class imbalance before model training
-- [ ] Implement baseline signature detection using Suricata and compare with fail2ban/custom logic
-- [ ] Train ML models (XGBoost classifier + Isolation Forest for anomaly detection)
+- [x] Address class imbalance before model training
+- [x] Implement a rule-based baseline detector and evaluate per-class (90.9% overall; documented failure modes)
+- [ ] Implement signature detection using Suricata and compare with baseline/fail2ban
+- [ ] Train ML models (XGBoost classifier + Isolation Forest for anomaly detection) and beat the 90.9% baseline honestly
 - [ ] Build FastAPI service for real-time traffic analysis and alert generation
 - [ ] Develop React dashboard for visualization and live alerts
 - [ ] Perform adversarial testing (evasion techniques) and improve detection robustness
